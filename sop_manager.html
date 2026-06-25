@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOP Manager – Sala Infusioni & Sciroppi</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#1a202c;min-height:100vh}
+  :root{--blue:#2563eb;--green:#16a34a;--gray:#64748b;--red:#dc2626}
+
+  .login-overlay{display:flex;position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f,#2563eb);z-index:200;align-items:center;justify-content:center}
+  .login-box{background:#fff;border-radius:20px;padding:36px 40px;width:min(400px,90vw);text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+  .login-box h2{font-size:1.2rem;font-weight:700;color:#1e3a5f;margin-bottom:6px}
+  .login-box p{font-size:.85rem;color:var(--gray);margin-bottom:24px}
+  .role-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  .role-btn{padding:16px;border:2px solid #e2e8f0;border-radius:12px;cursor:pointer;background:#fff;font-size:.9rem;font-weight:600;transition:all .2s}
+  .role-btn:hover{border-color:var(--blue);color:var(--blue)}
+  .role-btn .icon{font-size:1.8rem;display:block;margin-bottom:6px}
+  .pin-area{display:none;margin-top:4px}
+  .pin-area input{width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:1.1rem;text-align:center;letter-spacing:6px;margin-bottom:10px}
+  .pin-area input:focus{outline:none;border-color:var(--blue)}
+  .btn-pin{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700}
+  .pin-error{color:var(--red);font-size:.82rem;margin-top:4px;display:none}
+  .role-badge{display:inline-block;padding:3px 12px;border-radius:10px;font-size:.75rem;font-weight:700}
+  .role-badge.admin{background:#dbeafe;color:#1d4ed8}
+  .role-badge.operator{background:#dcfce7;color:#15803d}
+
+  header{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .header-left{display:flex;flex-direction:column;gap:3px}
+  header h1{font-size:1.3rem;font-weight:700}
+  .sop-acronym .big{font-size:1.4em;font-weight:800}
+  .sop-acronym .small{font-size:0.7em;font-weight:400;opacity:.9}
+  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .btn-logout{padding:4px 10px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;cursor:pointer;font-size:.75rem}
+
+  nav{display:flex;gap:8px;padding:14px 28px;background:#fff;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;align-items:center}
+  nav button{padding:8px 18px;border:none;border-radius:20px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+  nav button.active{background:var(--blue);color:#fff}
+  nav button:not(.active){background:#f1f5f9;color:#475569}
+  nav button:not(.active):hover{background:#e2e8f0}
+  nav button:disabled{opacity:.4;cursor:not-allowed}
+
+  main{padding:24px 28px;max-width:1100px;margin:0 auto}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+  .stat-card{background:#fff;border-radius:12px;padding:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .stat-card .num{font-size:2rem;font-weight:700;color:var(--blue)}
+  .stat-card .lbl{font-size:.8rem;color:var(--gray);margin-top:4px}
+  .area-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .area-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .area-card h3{font-size:1rem;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0}
+  .area-card.infusioni h3{border-color:#2563eb;color:#1e3a5f}
+  .area-card.sciroppi h3{border-color:#16a34a;color:#14532d}
+  .proc-mini{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+  .proc-mini:hover{background:#f8fafc;margin:0 -8px;padding:7px 8px;border-radius:6px}
+  .badge{font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:600}
+  .badge.approvata{background:#dcfce7;color:#16a34a}
+  .badge.bozza{background:#fef9c3;color:#a16207}
+  .badge.obsoleta{background:#fee2e2;color:#dc2626}
+
+  .toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+  .toolbar input{flex:1;padding:9px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:.9rem}
+  .toolbar select{padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:.85rem;background:#fff}
+  .btn-new{padding:9px 18px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.85rem}
+
+  .proc-table{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .proc-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;padding:12px 16px;border-bottom:1px solid #f1f5f9;align-items:center}
+  .proc-row.header{background:#f8fafc;font-size:.78rem;font-weight:700;color:var(--gray);text-transform:uppercase}
+  .proc-row:not(.header):hover{background:#f8fafc;cursor:pointer}
+  .proc-title{font-weight:600;font-size:.88rem}
+  .proc-date{font-size:.8rem;color:var(--gray)}
+  .btn-icon{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:1rem}
+  .btn-icon:hover{background:#e2e8f0}
+
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center}
+  .overlay.open{display:flex}
+  .modal{background:#fff;border-radius:16px;padding:28px;width:min(680px,95vw);max-height:90vh;overflow-y:auto;position:relative}
+  .modal h2{font-size:1.15rem;font-weight:700;margin-bottom:18px;color:#1e3a5f}
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:.82rem;font-weight:600;color:var(--gray);margin-bottom:5px}
+  .form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:.88rem;font-family:inherit}
+  .form-group textarea{min-height:90px;resize:vertical}
+  .btn-ai{width:100%;padding:11px;background:linear-gradient(135deg,#6366f1,#2563eb);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.9rem;margin-bottom:10px}
+  .btn-ai:disabled{opacity:.5;cursor:not-allowed}
+  .ai-result{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:.83rem;line-height:1.7;margin-bottom:14px;display:none}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+  .btn-save{padding:10px 22px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700}
+  .btn-cancel{padding:10px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+  .btn-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--gray)}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .sop-content{font-size:.88rem;line-height:1.8;background:#f8fafc;border-radius:8px;padding:16px}
+  .detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+  .detail-header h2{font-size:1.2rem;font-weight:700;color:#1e3a5f;max-width:80%}
+  .detail-meta{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+  .detail-meta span{font-size:.82rem;color:var(--gray)}
+  .detail-meta strong{color:#1a202c}
+  .detail-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+  .btn-print{padding:9px 18px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+  .btn-edit{padding:9px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+  .btn-del{padding:9px 16px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:#fff;padding:10px 24px;border-radius:10px;font-size:.88rem;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+  .toast.show{opacity:1}
+
+  @media print{
+    header,nav,.toolbar,.modal-actions,.detail-actions,.toast{display:none!important}
+    body{background:#fff}
+    .print-header{display:block!important}
+    .sop-content{background:#fff;border:1px solid #ccc}
+  }
+  .print-header{display:none}
+  @media(max-width:600px){
+    .area-cards{grid-template-columns:1fr}
+    .proc-row{grid-template-columns:1fr auto}
+    .proc-row .proc-area,.proc-row .proc-date,.proc-row .proc-tipo{display:none}
+    main{padding:14px}
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>📋 SOP Manager</h2>
+    <p>Sala Infusioni & Sciroppi</p>
+    <div class="role-btns">
+      <button class="role-btn" onclick="loginAs('operator')"><span class="icon">👷</span>Operatore</button>
+      <button class="role-btn" onclick="showPin()"><span class="icon">🔐</span>Amministratore</button>
+    </div>
+    <div class="pin-area" id="pinArea">
+      <input type="password" id="pinInput" maxlength="6" placeholder="• • • • • •" onkeydown="if(event.key==='Enter')checkPin()">
+      <button class="btn-pin" onclick="checkPin()">Accedi</button>
+      <div class="pin-error" id="pinError">PIN errato. Riprova.</div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="header-left">
+    <h1 class="sop-acronym">📋 <span class="big">S</span><span class="small">tandard </span><span class="big">O</span><span class="small">perating </span><span class="big">P</span><span class="small">rocedures</span></h1>
+    <span style="font-size:.75rem;opacity:.7">Sala Infusioni & Sciroppi</span>
+  </div>
+  <div class="header-right">
+    <span id="hdrDate" style="font-size:.75rem;opacity:.8"></span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="role-badge" id="roleBadge"></span>
+      <button class="btn-logout" onclick="logout()">⇤ Esci</button>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('dashboard')">🏠 Dashboard</button>
+  <button onclick="showPage('procedure')">📄 Procedure</button>
+  <button id="btnNuova" onclick="openNewModal()" disabled>➕ Nuova SOP</button>
+</nav>
+
+<main id="mainContent"></main>
+
+<!-- MODAL NUOVA/EDIT SOP -->
+<div class="overlay" id="sopModal">
+  <div class="modal">
+    <button class="btn-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle">Nuova Procedura Operativa</h2>
+    <div class="form-group"><label>Titolo *</label><input id="fTitle" placeholder="es. Cambio filtri a sacco sala infusioni"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>Area *</label>
+        <select id="fArea"><option>Sala Infusioni</option><option>Sala Sciroppi</option><option value="Comune (entrambe)">Comune (entrambe)</option></select>
+      </div>
+      <div class="form-group"><label>Tipo</label>
+        <select id="fTipo"><option>Cambio componente</option><option>Avvio produzione</option><option>Ripartenza</option><option>CIP / Pulizia</option><option>Manutenzione</option><option>Controllo qualità</option><option>Altro</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Frequenza</label>
+      <select id="fFreq"><option>Ogni turno</option><option>Giornaliera</option><option>Settimanale</option><option>Mensile</option><option>A ogni cambio formato</option><option>A ogni cambio produzione</option><option>Su richiesta / Occasionale</option><option>Straordinaria</option></select>
+    </div>
+    <div class="form-group"><label>Descrivi l'operazione</label>
+      <textarea id="fDesc" placeholder="Descrivi cosa fa l'operatore, su quale impianto, eventuali criticità..."></textarea>
+    </div>
+    <button class="btn-ai" id="btnGenerate" onclick="generateSOP()">✨ Genera SOP con AI</button>
+    <div class="ai-result" id="aiResult"></div>
+    <div class="form-group"><label>Stato</label>
+      <select id="fStato"><option value="bozza">Bozza</option><option value="approvata">Approvata</option><option value="obsoleta">Obsoleta</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annulla</button>
+      <button class="btn-save" onclick="saveSOP()">💾 Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETTAGLIO -->
+<div class="overlay" id="detailModal">
+  <div class="modal"><button class="btn-close" onclick="closeDetail()">✕</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PIN = "1234";
+const CREATOR = "Silvio Chiaverini";
+
+// ── PROCEDURE INCORPORATE ──
+let procedures = [
+  {
+    id: 'sop_001',
+    title: 'Cambio filtri a sacco',
+    area: 'Sala Infusioni',
+    tipo: 'Cambio componente',
+    freq: 'A ogni intasamento o cambio produzione',
+    desc: 'Sostituzione filtri a sacco sulla linea di filtrazione estratto di tè.',
+    stato: 'approvata',
+    date: '14/05/2026',
+    creator: 'Silvio Chiaverini',
+    content: `## 1. SCOPO
+Definire la procedura corretta per la sostituzione dei filtri a sacco sulla linea di filtrazione dell'estratto di tè, garantendo la qualità del prodotto e la sicurezza dell'operatore.
+
+## 2. CAMPO DI APPLICAZIONE
+Sala Infusioni — linea di filtrazione estratto di tè. Si applica ad ogni sostituzione programmata o straordinaria dei filtri a sacco.
+
+## 3. RIFERIMENTI
+Frequenza: a ogni intasamento o cambio produzione, oppure quando la pressione differenziale supera **1,5 bar** (il sistema di gestione darà allarme).
+
+## 4. DPI RICHIESTI
+**Guanti in nitrile** resistenti al calore
+**Occhiali di protezione**
+Calzature antiscivolo
+
+## 5. MATERIALI E ATTREZZATURE
+Filtri a sacco nuovi (misura e micronaggio conformi alla ricetta in produzione)
+Registro delle sostituzioni
+
+## 6. PROCEDURA OPERATIVA
+
+### 6.1 Preparazione
+1. Verificare di avere a disposizione i filtri a sacco del **micronaggio corretto**.
+
+### 6.2 Arresto e messa in sicurezza
+2. **Cambiare campana in lavoro** mettendo prima in pulizia la campana in preallarme, poi in lavoro l'altra.
+3. **Aspettare che la procedura sia conclusa dal sistema** e all'accensione della **luce verde** aprire la porta del filtro.
+
+### 6.3 Sostituzione
+8. Aprire il coperchio del portafiltro svitando i bulloni in sequenza crociata.
+9. Estrarre i filtri esausti con cautela e riporli **nella rastrelliera**.
+10. **Ispezionare il cestello interno**: verificare assenza di rotture o depositi anomali.
+11. **Lavare i filtri con l'idropulitrice.**
+12. Inserire i filtri lavati assicurandosi che siano **correttamente posizionati e ancorati** al cestello.
+13. Richiudere il coperchio serrando i bulloni in sequenza crociata a **coppia uniforme**.
+
+### 6.4 Riavvio
+14. **Chiudere la porta** ed eseguire la sequenza di tasti per bloccarla.
+15. Andare sul **PC di controllo impianto** e riportare in funzione i filtri da **Richiesta Pulizia**.
+
+## 7. ANOMALIE E AZIONI CORRETTIVE
+**Perdita dal portafiltro** → fermare la pompa, verificare la tenuta del coperchio e riserrare i bulloni.
+**Filtro danneggiato o rotto** → sostituire immediatamente, segnalare al responsabile qualità, valutare impatto sul lotto.
+**Pressione differenziale continuativamente bassa** → verificare corretto posizionamento del sacco, controllare che non ci siano filtri bucati o mal posizionati nel cestello.
+
+## 8. NOTE DI SICUREZZA
+I filtri esausti vanno smaltiti come **rifiuto speciale** secondo le procedure aziendali.
+Registrare ogni sostituzione sul **registro manutenzione** con ora, operatore e tipo di filtro installato.`
+  }
+];
+
+let currentPage = 'dashboard';
+let editingId = null;
+let generatedContent = '';
+let currentRole = null;
+
+document.getElementById('hdrDate').textContent = new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+function showToast(msg,d=3000){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
+
+function showPin(){ document.getElementById('pinArea').style.display='block'; document.getElementById('pinInput').focus(); }
+function checkPin(){
+  if(document.getElementById('pinInput').value===ADMIN_PIN){ loginAs('admin'); }
+  else { document.getElementById('pinError').style.display='block'; document.getElementById('pinInput').value=''; }
+}
+function loginAs(role){
+  currentRole=role;
+  document.getElementById('loginOverlay').style.display='none';
+  const badge=document.getElementById('roleBadge');
+  badge.textContent=role==='admin'?'🔐 Amministratore':'👷 Operatore';
+  badge.className='role-badge '+(role==='admin'?'admin':'operator');
+  document.getElementById('btnNuova').disabled=role!=='admin';
+  showPage('dashboard');
+}
+function logout(){
+  currentRole=null;
+  document.getElementById('pinInput').value='';
+  document.getElementById('pinError').style.display='none';
+  document.getElementById('pinArea').style.display='none';
+  document.getElementById('loginOverlay').style.display='flex';
+}
+
+function showPage(p){
+  currentPage=p;
+  document.querySelectorAll('nav > button').forEach((b,i)=>b.classList.toggle('active',['dashboard','procedure'][i]===p));
+  if(p==='dashboard') renderDashboard(); else renderProcedure();
+}
+
+function md(text){
+  if(!text) return '';
+  let t=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  t=t.replace(/^---+\s*$/gm,'').replace(/\n{3,}/g,'\n\n');
+  t=t.replace(/^### (.+)$/gm,'<strong style="color:#16a34a;font-size:.95rem">$1</strong>');
+  t=t.replace(/^## (.+)$/gm,'<strong style="color:#2563eb;font-size:1rem">$1</strong>');
+  t=t.replace(/^# (.+)$/gm,'<strong style="color:#dc2626;font-size:1.05rem">$1</strong>');
+  t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  t=t.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  return t;
+}
+
+function renderDashboard(){
+  const total=procedures.length,approvate=procedures.filter(p=>p.stato==='approvata').length,bozze=procedures.filter(p=>p.stato==='bozza').length;
+  const inf=procedures.filter(p=>p.area==='Sala Infusioni'),sci=procedures.filter(p=>p.area==='Sala Sciroppi'),com=procedures.filter(p=>p.area==='Comune (entrambe)');
+  document.getElementById('mainContent').innerHTML=`
+    <div class="stats">
+      <div class="stat-card"><div class="num">${total}</div><div class="lbl">Totali</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--green)">${approvate}</div><div class="lbl">Approvate</div></div>
+      <div class="stat-card"><div class="num" style="color:#a16207">${bozze}</div><div class="lbl">Bozze</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--gray)">${total-approvate-bozze}</div><div class="lbl">Obsolete</div></div>
+    </div>
+    <div class="area-cards">
+      <div class="area-card infusioni"><h3>🫖 Sala Infusioni (${inf.length+com.length})</h3>
+        ${[...inf,...com].slice(0,6).map(p=>`<div class="proc-mini" onclick="openDetail('${p.id}')"><span>${p.title}</span><span class="badge ${p.stato}">${p.stato}</span></div>`).join('')||'<p style="color:var(--gray);font-size:.83rem;padding:8px 0">Nessuna procedura</p>'}
+      </div>
+      <div class="area-card sciroppi"><h3>🍯 Sala Sciroppi (${sci.length+com.length})</h3>
+        ${[...sci,...com].slice(0,6).map(p=>`<div class="proc-mini" onclick="openDetail('${p.id}')"><span>${p.title}</span><span class="badge ${p.stato}">${p.stato}</span></div>`).join('')||'<p style="color:var(--gray);font-size:.83rem;padding:8px 0">Nessuna procedura</p>'}
+      </div>
+    </div>`;
+}
+
+function renderProcedure(filter='',areaFilter=''){
+  const filtered=procedures.filter(p=>(!filter||p.title.toLowerCase().includes(filter.toLowerCase())||p.content.toLowerCase().includes(filter.toLowerCase()))&&(!areaFilter||p.area===areaFilter));
+  const isAdmin=currentRole==='admin';
+  document.getElementById('mainContent').innerHTML=`
+    <div class="toolbar">
+      <input id="searchInput" placeholder="🔍 Cerca…" oninput="renderProcedure(this.value,document.getElementById('areaFilter').value)" value="${filter}">
+      <select id="areaFilter" onchange="renderProcedure(document.getElementById('searchInput').value,this.value)">
+        <option value="">Tutte le aree</option><option>Sala Infusioni</option><option>Sala Sciroppi</option><option value="Comune (entrambe)">Comune</option>
+      </select>
+      ${isAdmin?'<button class="btn-new" onclick="openNewModal()">➕ Nuova SOP</button>':''}
+    </div>
+    <div class="proc-table">
+      <div class="proc-row header"><span>Titolo</span><span>Area</span><span>Tipo</span><span>Stato</span><span></span></div>
+      ${filtered.length===0?'<div style="padding:24px;text-align:center;color:var(--gray)">Nessuna procedura</div>':
+        filtered.map(p=>`<div class="proc-row" onclick="openDetail('${p.id}')">
+          <div><div class="proc-title">${p.title}</div><div class="proc-date">📅 ${p.date} · ${p.creator}</div></div>
+          <span class="proc-area" style="font-size:.8rem;color:var(--gray)">${p.area}</span>
+          <span class="proc-tipo" style="font-size:.8rem;color:var(--gray)">${p.tipo}</span>
+          <span class="badge ${p.stato}">${p.stato}</span>
+          <div onclick="event.stopPropagation()">${isAdmin?`<button class="btn-icon" onclick="openEditModal('${p.id}')">✏️</button><button class="btn-icon" onclick="deleteProc('${p.id}')">🗑️</button>`:'—'}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function openNewModal(){
+  if(currentRole!=='admin') return;
+  editingId=null; generatedContent='';
+  document.getElementById('modalTitle').textContent='Nuova Procedura Operativa';
+  ['fTitle','fDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fStato').value='bozza';
+  document.getElementById('aiResult').style.display='none';
+  document.getElementById('aiResult').innerHTML='';
+  document.getElementById('sopModal').classList.add('open');
+}
+function openEditModal(id){
+  if(currentRole!=='admin') return;
+  const p=procedures.find(x=>x.id===id); if(!p) return;
+  editingId=id; generatedContent=p.content;
+  document.getElementById('modalTitle').textContent='Modifica Procedura';
+  document.getElementById('fTitle').value=p.title;
+  document.getElementById('fArea').value=p.area;
+  document.getElementById('fTipo').value=p.tipo;
+  document.getElementById('fFreq').value=p.freq||'Ogni turno';
+  document.getElementById('fDesc').value=p.desc||'';
+  document.getElementById('fStato').value=p.stato;
+  const el=document.getElementById('aiResult');
+  el.innerHTML=p.content?md(p.content):''; el.style.display=p.content?'block':'none';
+  document.getElementById('sopModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('sopModal').classList.remove('open'); }
+
+async function generateSOP(){
+  const title=document.getElementById('fTitle').value.trim(), desc=document.getElementById('fDesc').value.trim();
+  if(!title&&!desc){ alert('Inserisci titolo o descrizione.'); return; }
+  const btn=document.getElementById('btnGenerate');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Generazione…';
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,messages:[{role:'user',content:`Sei un esperto di procedure operative in uno stabilimento di imbottigliamento di bevande (Estathè). Genera una SOP professionale per: TITOLO: ${title||'da determinare'} | AREA: ${document.getElementById('fArea').value} | TIPO: ${document.getElementById('fTipo').value} | DESCRIZIONE: ${desc||'—'}. Sezioni obbligatorie: ## 1. SCOPO / ## 2. CAMPO DI APPLICAZIONE / ## 3. RIFERIMENTI / ## 4. DPI RICHIESTI / ## 5. MATERIALI E ATTREZZATURE / ## 6. PROCEDURA OPERATIVA / ## 7. PUNTI DI CONTROLLO / ## 8. ANOMALIE E AZIONI CORRETTIVE / ## 9. NOTE DI SICUREZZA. Usa ## per titoli sezione, ### per sottosezioni, **grassetto** per valori critici. Non usare ---.`}]})});
+    const data=await res.json();
+    generatedContent=data.content?.map(b=>b.text||'').join('')||'';
+    const el=document.getElementById('aiResult');
+    el.innerHTML=md(generatedContent); el.style.display='block';
+  } catch(e){ alert('Errore AI. Riprova.'); }
+  btn.disabled=false; btn.innerHTML='✨ Rigenera SOP con AI';
+}
+
+function saveSOP(){
+  const title=document.getElementById('fTitle').value.trim();
+  if(!title){ alert('Inserisci il titolo.'); return; }
+  if(!generatedContent&&!editingId){ alert('Genera prima la SOP con AI.'); return; }
+  const now=new Date().toLocaleDateString('it-IT');
+  if(editingId){
+    const idx=procedures.findIndex(p=>p.id===editingId);
+    procedures[idx]={...procedures[idx],title,area:document.getElementById('fArea').value,tipo:document.getElementById('fTipo').value,freq:document.getElementById('fFreq').value,desc:document.getElementById('fDesc').value,stato:document.getElementById('fStato').value,content:generatedContent||procedures[idx].content};
+  } else {
+    procedures.unshift({id:'sop_'+Date.now(),title,area:document.getElementById('fArea').value,tipo:document.getElementById('fTipo').value,freq:document.getElementById('fFreq').value,desc:document.getElementById('fDesc').value,stato:document.getElementById('fStato').value,content:generatedContent,date:now,creator:CREATOR});
+  }
+  showToast('✅ Procedura salvata! Ricordati di aggiornarla anche su Claude.');
+  closeModal();
+  showPage(currentPage);
+}
+
+function openDetail(id){
+  const p=procedures.find(x=>x.id===id); if(!p) return;
+  const isAdmin=currentRole==='admin';
+  document.getElementById('detailContent').innerHTML=`
+    <div class="print-header" style="margin-bottom:16px;border-bottom:2px solid #1e3a5f;padding-bottom:10px">
+      <strong>SOP – ${p.title}</strong><br>
+      <span style="font-size:.8rem;color:#666">Creato da: ${p.creator} | Data: ${p.date} | Area: ${p.area} | Frequenza: ${p.freq||'—'}</span>
+    </div>
+    <div class="detail-header"><h2>${p.title}</h2><span class="badge ${p.stato}" style="font-size:.85rem;padding:4px 12px">${p.stato}</span></div>
+    <div class="detail-meta">
+      <span>📍 <strong>${p.area}</strong></span>
+      <span>🔧 <strong>${p.tipo}</strong></span>
+      <span>🔁 <strong>${p.freq||'—'}</strong></span>
+      <span>📅 <strong>${p.date}</strong></span>
+      <span>👤 <strong>${p.creator}</strong></span>
+    </div>
+    <div class="sop-content">${md(p.content)}</div>
+    <div class="detail-actions">
+      ${isAdmin?`<button class="btn-del" onclick="deleteProc('${p.id}');closeDetail()">🗑️ Elimina</button><button class="btn-edit" onclick="closeDetail();openEditModal('${p.id}')">✏️ Modifica</button>`:''}
+      <button class="btn-print" onclick="printSOP()">🖨️ Stampa</button>
+      <button class="btn-cancel" onclick="closeDetail()">✕ Chiudi</button>
+    </div>`;
+  document.getElementById('detailModal').classList.add('open');
+}
+function closeDetail(){ document.getElementById('detailModal').classList.remove('open'); }
+function printSOP(){
+  document.querySelector('#detailModal .print-header').style.display='block';
+  window.print();
+  setTimeout(()=>{ document.querySelector('#detailModal .print-header').style.display='none'; },500);
+}
+
+function deleteProc(id){
+  if(currentRole!=='admin') return;
+  if(!confirm('Eliminare questa procedura?')) return;
+  procedures=procedures.filter(p=>p.id!==id);
+  showPage(currentPage);
+}
+</script>
+</body>
+</html>
