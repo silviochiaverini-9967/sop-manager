@@ -106,11 +106,13 @@
 
   @media print{
     header,nav,.toolbar,.modal-actions,.detail-actions,.toast,.login-overlay,.btn-close{display:none!important}
-    body{background:#fff}
-    .overlay.open{position:static;background:none}
-    .modal{position:static;max-height:none;overflow:visible;width:100%;box-shadow:none;padding:0;border-radius:0}
+    body{background:#fff;overflow:visible!important;height:auto!important}
+    .overlay.open{position:static;background:none;display:block!important;overflow:visible!important;height:auto!important}
+    .modal{position:static;max-height:none!important;overflow:visible!important;width:100%;box-shadow:none;padding:0;border-radius:0;height:auto!important}
     .print-header{display:block!important}
-    .sop-content{background:#fff;border:1px solid #ccc}
+    .sop-content{background:#fff;border:1px solid #ccc;overflow:visible!important;height:auto!important;page-break-inside:auto}
+    #detailContent{overflow:visible!important;height:auto!important}
+    *{overflow:visible!important}
   }
   .print-header{display:none}
   @media(max-width:600px){
