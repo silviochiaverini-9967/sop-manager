@@ -85,7 +85,7 @@
   .ai-result{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:.83rem;line-height:1.7;margin-bottom:14px;display:none}
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
   .btn-save{padding:10px 22px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700}
-  .btn-cancel{padding:10px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+  .btn-chiudi{padding:9px 16px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600}
   .btn-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--gray)}
   .spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -105,7 +105,7 @@
   .toast.show{opacity:1}
 
   @media print{
-    header,nav,.toolbar,.modal-actions,.detail-actions,.toast,.login-overlay,.btn-close,#mainContent{display:none!important}
+    header,nav,.toolbar,.modal-actions,.detail-actions,.toast,.login-overlay,.btn-close,.btn-chiudi,#mainContent{display:none!important}
     body{background:#fff;overflow:visible!important;height:auto!important}
     .overlay.open{position:static;background:none;display:block!important;overflow:visible!important;height:auto!important}
     .modal{position:static;max-height:none!important;overflow:visible!important;width:100%;box-shadow:none;padding:0;border-radius:0;height:auto!important}
@@ -268,6 +268,63 @@ Registro delle sostituzioni
 ## 8. NOTE DI SICUREZZA
 I filtri esausti vanno smaltiti come **rifiuto speciale** secondo le procedure aziendali.
 Registrare ogni sostituzione sul **registro manutenzione** con ora, operatore e tipo di filtro installato.`
+  },
+  {
+    id: 'sop_002',
+    title: 'CANS - Fornitura Prodotto da Sala Sciroppi',
+    area: 'Comune (entrambe)',
+    tipo: 'Avvio produzione',
+    freq: 'A ogni cambio produzione',
+    desc: 'Procedura per avviare la fornitura prodotto dalla Sala Sciroppi alla linea CANS (Riempitrice Lattine).',
+    stato: 'approvata',
+    date: '26/06/2026',
+    creator: 'Silvio Chiaverini',
+    content: `## 1. SCOPO
+Definire la sequenza operativa corretta per avviare la fornitura di prodotto dalla Sala Sciroppi alla linea CANS (Riempitrice Lattine), tramite il sistema di controllo impianto.
+
+## 2. CAMPO DI APPLICAZIONE
+Sala Sciroppi — pannello di controllo impianto. Si applica ad ogni avvio o cambio produzione sulla linea CANS.
+
+## 3. RIFERIMENTI
+Frequenza: **a ogni cambio produzione** o riavvio linea CANS.
+
+## 4. DPI RICHIESTI
+Nessun DPI specifico richiesto (operazione su pannello di controllo).
+
+## 5. MATERIALI E ATTREZZATURE
+Accesso al **PC di controllo impianto** in Sala Sciroppi.
+
+## 6. PROCEDURA OPERATIVA
+
+### 6.1 Impostazione linea di scarico
+1. Dal **Menu Principale** → **Aromatizzatori** → **Cicli** → in basso a sinistra selezionare **"Linea Scarico 3"** → **Riempitrice Lattine**.
+
+### 6.2 Messa in produzione
+2. Probabilmente la si trova in **Lavaggio** → Mettere in **Produzione**.
+
+### 6.3 Configurazione Serbatoio Ferrero
+3. **Menu Principale** → **Succhi e Ferrero** → **Cicli** → tutto a destra selezionare **Serbatoio Ferrero** → Vedi punto 2 → **STOP** → **PRODUZIONE**.
+
+### 6.4 Impostazione funzione scarico
+4. Nella prima combo in alto **FUNZIONE** → selezionare **Scarico Linea Asettica** ma **SENZA PREMERE START**.
+
+### 6.5 Attivazione THE FERRERO BIBITA
+5. **Menu Principale** → **Aromatizzatori** → in basso cliccare su **THE FERRERO BIBITA** → attendere che **diventi verde**.
+
+### 6.6 Collegamento linea Ferrero a Manifold
+6. **Impianto Succhi Ferrero** → in basso a destra → **Linea Ferrero a Manifold** → mettere in **Produzione**.
+
+### 6.7 Avvio scarico lattine
+7. **Serbatoio Ferrero** → **Funzione** → **Scarico Lattine** → **START**.
+
+## 7. ANOMALIE E AZIONI CORRETTIVE
+**THE FERRERO BIBITA non diventa verde** → verificare che il serbatoio sia carico e che non ci siano allarmi attivi sul pannello.
+**Prodotto non arriva in linea CANS** → verificare che tutti i passaggi siano stati eseguiti nell'ordine corretto, controllare lo stato delle valvole sul Manifold.
+**Allarme sul Serbatoio Ferrero** → contattare il capoturno e verificare livello e parametri del serbatoio.
+
+## 8. NOTE DI SICUREZZA
+⚠️ **Al punto 4, NON premere START** fino a quando non sono stati completati i passaggi successivi (5, 6, 7).
+Seguire rigorosamente l'ordine dei passaggi per evitare invii di prodotto errati alla linea.`
   }
 ];
 
@@ -443,9 +500,10 @@ function openDetail(id){
     <div class="detail-actions">
       ${isAdmin?`<button class="btn-del" onclick="deleteProc('${p.id}');closeDetail()">🗑️ Elimina</button><button class="btn-edit" onclick="closeDetail();openEditModal('${p.id}')">✏️ Modifica</button>`:''}
       <button class="btn-print" onclick="printSOP()">🖨️ Stampa</button>
-      <button class="btn-cancel" onclick="closeDetail()">✕ Chiudi</button>
+      <button class="btn-chiudi" onclick="closeDetail()">✕ Chiudi</button>
     </div>`;
   document.getElementById('detailModal').classList.add('open');
+  setTimeout(()=>{ document.querySelector('#detailModal .modal').scrollTop = 0; }, 50);
 }
 function closeDetail(){ document.getElementById('detailModal').classList.remove('open'); }
 function printSOP(){
