@@ -193,10 +193,10 @@
 </div>
 
 <script>
-const ADMIN_PIN = "9967";
+const ADMIN_PIN = "1234";
 const CREATOR = "Silvio Chiaverini";
 const REPO = "silviochiaverini-9967/sop-manager";
-const FILE = "data.json";
+const FILE = "sop-v2/data.json";
 const GH = "https://api.github.com";
 
 let procedures=[], currentPage='dashboard', editingId=null, generatedContent='', currentRole=null, fileSha='';
@@ -275,7 +275,7 @@ async function ghPut(){
 // ── Schermate ─────────────────────────────────────────────────────────────────
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  if(id) document.getElementById(id).classList.add('active');
 }
 function showToast(msg,d=4000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
 
